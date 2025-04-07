@@ -1,0 +1,50 @@
+version: '3.5'
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ENABLE_V2=true
+    command: >
+      etcd
+      --advertise-client-urls http://0.0.0.0:2379
+      --listen-client-urls http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  milvus-standalone:
+    image: milvusdb/milvus:v2.3.3
+    container_name: milvus
+    command: ["milvus", "run", "standalone"]
+    depends_on:
+      - etcd
+      - minio
+    environment:
+      - ETCD_ENDPOINTS=http://etcd:2379
+      - MINIO_ADDRESS=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - USE_MINIO=true
+      - BUCKET_NAME=a-bucket
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+
+volumes:
+  minio_data:
+

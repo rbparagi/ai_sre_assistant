@@ -1,0 +1,5 @@
+Start the milvus DB
+    docker-compose up -d
+
+Run the FastAPI server (from the path where mail.py is present)
+    uvicorn main:app --reload
